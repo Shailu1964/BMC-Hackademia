@@ -1,7 +1,7 @@
 {
-  "name": "Python Dev Environment",
+  "name": "Python & Ollama Dev Environment",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
-  "postCreateCommand": "pip install -r requirements.txt",
+  "postCreateCommand": "curl -fsSL https://ollama.com/install.sh | sh && pip install -r requirements.txt && ollama serve &",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:1": {}
   }
