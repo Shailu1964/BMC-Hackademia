@@ -1,0 +1,8 @@
+{
+  "name": "Ollama Dev Environment",
+  "image": "ghcr.io/codespaces/python:latest",
+  "postCreateCommand": "ollama serve &",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:1": {}
+  }
+}
