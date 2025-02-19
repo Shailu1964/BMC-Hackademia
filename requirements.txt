@@ -1,0 +1,10 @@
+streamlit
+python-dotenv
+langchain
+langchain-core
+langchain-community
+langchain-ollama
+langchain-groq
+ollama
+faiss-cpu
+pdfplumber
