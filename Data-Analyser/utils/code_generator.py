@@ -42,7 +42,7 @@ def generate_pandas_code(question, columns, include_viz=True):
     For visualization requests:
     - Always include 'from utils.visualization import create_plot' when using create_plot
     - Available plot types: line, scatter, bar, histogram, boxplot, heatmap, pie
-    - Example: result = create_plot('line', df, x='date', y='value', title='Trend')
+    - Example: result = create_plot('line', data=df, x='column1', y='column2', title='Trend')
     - The DataFrame 'df' is already loaded and available
     """
     
@@ -58,13 +58,13 @@ def generate_pandas_code(question, columns, include_viz=True):
     6. Keep code concise
     7. The code should be directly executable - No samples or examples
     8. If user asks general questions , reply with correct general output as a python string. (for example - user:"hi how are you", python_code(ouput): result = "am fine how are you ")
-    9. Also make sure there are interactive text responses not just tables and other stuff.
+    9. Also make sure there are interactive text along with the answers and tables.
     {viz_hint if include_viz else ''}
     """
     
     # Configure generation parameters
     generation_config = GenerationConfig(
-        temperature=0.3,  # Lower temperature for more consistent outputs
+        temperature=0.5,  # Lower temperature for more consistent outputs
         top_p=0.8,       # Nucleus sampling parameter
         max_output_tokens=500,  # Maximum length of response
         candidate_count=1  # Number of completion choices to generate

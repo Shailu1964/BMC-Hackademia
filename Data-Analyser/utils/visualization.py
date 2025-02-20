@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import io
 import base64
+import pandas as pd
+import numpy as np
 
 def create_plot(plot_type, data, x=None, y=None, title=None, kind='line', figsize=(10, 6)):
     """Create different types of plots based on the plot type and data."""
@@ -13,19 +15,28 @@ def create_plot(plot_type, data, x=None, y=None, title=None, kind='line', figsiz
     elif plot_type == 'scatter':
         plt.scatter(data[x], data[y])
     elif plot_type == 'bar':
-        data[x].value_counts().plot(kind='bar')
+        if y is not None:
+            # If both x and y are provided, create a bar plot with actual y values
+            sns.barplot(x=x, y=y, data=data)
+        else:
+            # If only x is provided, create a count-based bar plot
+            data[x].value_counts().plot(kind='bar')
     elif plot_type == 'histogram':
         plt.hist(data[x], bins=30)
     elif plot_type == 'boxplot':
         sns.boxplot(x=x, y=y, data=data)
     elif plot_type == 'heatmap':
-        sns.heatmap(data.corr(), annot=True, cmap='coolwarm')
+        if isinstance(data, (pd.DataFrame, np.ndarray)):
+            sns.heatmap(data, annot=True, cmap='coolwarm')
+        else:
+            sns.heatmap(data.corr(), annot=True, cmap='coolwarm')
     elif plot_type == 'pie':
         data[x].value_counts().plot(kind='pie', autopct='%1.1f%%')
     
     if title:
         plt.title(title)
-    
+        
+    plt.xticks(rotation=45)
     plt.tight_layout()
     
     # Convert plot to base64 string
