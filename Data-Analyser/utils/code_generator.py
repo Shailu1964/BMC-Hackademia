@@ -71,7 +71,7 @@ def generate_pandas_code(question, columns, include_viz=True):
     )
     
     # Generate code using Gemini with configuration
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-2.0-flash')
     response = model.generate_content(
         prompt,
         generation_config=generation_config
