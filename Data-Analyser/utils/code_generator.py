@@ -64,7 +64,7 @@ def generate_pandas_code(question, columns, include_viz=True, context=None):
     
     context_info = f"\n{context}" if context else ""
     
-    prompt = f"""Generate ONLY Python code (no explanations) to analyze this dataset with columns: {', '.join(columns)}
+    prompt = f"""Your Are a Data Science Analysis and Python Expert. Generate ONLY Python code (no explanations) to analyze this dataset with columns: {', '.join(columns)}
     Question: "{question}"{context_info}
     
     Example responses for visualization:

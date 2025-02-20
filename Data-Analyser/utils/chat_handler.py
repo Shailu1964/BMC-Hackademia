@@ -64,10 +64,6 @@ def render_chat_message(message: Dict):
             st.markdown(f"You: {message['content']}")
         else:
             if message.get("result") is not None :
-                # if hasattr(message["result"], 'empty'):  # Check if result is a DataFrame
-                #     st.markdown("**Data Preview:**")
-                #     st.dataframe(message["result"], use_container_width=True)
-                # Handle dictionary results with figure and data
                 if isinstance(message["result"], dict) and "figure" in message["result"]:
                     # Display the figure
                     fig = message["result"]["figure"]
@@ -107,5 +103,8 @@ def render_chat_interface():
     
     # Display messages in the container
     with chat_container:
+       
         for message in st.session_state.messages:
             render_chat_message(message)
+
+        

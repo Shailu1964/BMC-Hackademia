@@ -235,9 +235,12 @@ def main():
                     st.markdown("Ask questions about your data in natural language!")
                     
                     # Display chat history
-                    render_chat_interface()
-                    
-                    # Chat input
+                    chat_placeholder = st.empty()
+                    with chat_placeholder.container():
+                       
+                        render_chat_interface()
+                        
+                        # Chat input
                     if question := st.chat_input("What would you like to know about your data?", key="chat_input"):
                         # Add user message to chat and show immediately
                         add_message("user", question)
@@ -303,6 +306,8 @@ def main():
                                         error_msg = f"❌ Error analyzing data: {str(e)}\nPlease try rephrasing your question."
                                         add_message("assistant", error_msg)
                                         st.rerun()
+        
+                        
         except Exception as e:
             st.error(f"Error reading CSV file: {str(e)}")
     else:

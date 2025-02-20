@@ -178,5 +178,36 @@ def get_css():
             margin-top: 0.5rem !important;
             margin-bottom: 0.5rem !important;
         }
+    .chat-message-container {
+        height: 600px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+    }
+    
+    .element-container {
+        margin-bottom: 10px;
+    }
+    
+    .stChatMessage {
+        margin-bottom: 15px;
+    }
+        .chat-container {
+            background-color: #0e1117;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 1rem;
+            color: #fafafa;
+            height: calc(100vh - 200px);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+    }
+    
+        
         </style>
     """
