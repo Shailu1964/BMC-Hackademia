@@ -20,52 +20,86 @@ def clean_code(code):
     
     # Remove any attempts to read CSV files
     lines = code.split('\n')
-    cleaned_lines = [line for line in lines if 'read_csv' not in line]
+    cleaned_lines = []
+    for line in lines:
+        # Skip lines with read_csv
+        if 'read_csv' in line:
+            continue
+        # Replace direct DataFrame boolean comparisons
+        if 'if df ==' in line or 'if df !=' in line:
+            continue
+        # Add proper DataFrame boolean checks
+        if 'if df' in line:
+            line = line.replace('if df', 'if df.empty')
+        cleaned_lines.append(line)
+    
     code = '\n'.join(cleaned_lines)
     
-    # Check if code contains visualization but missing import
+    # Add necessary imports
+    imports = []
     if 'create_plot' in code and 'from utils.visualization import create_plot' not in code:
-        code = 'from utils.visualization import create_plot\n' + code
-    
-    # Ensure pandas and numpy imports if needed
+        imports.append('from utils.visualization import create_plot')
     if ('pd.' in code or 'DataFrame' in code) and 'import pandas as pd' not in code:
-        code = 'import pandas as pd\n' + code
+        imports.append('import pandas as pd')
     if 'np.' in code and 'import numpy as np' not in code:
-        code = 'import numpy as np\n' + code
+        imports.append('import numpy as np')
+    
+    if imports:
+        code = '\n'.join(imports) + '\n\n' + code
     
     return code
 
-def generate_pandas_code(question, columns, include_viz=True):
+def generate_pandas_code(question, columns, include_viz=True, context=None):
     """Generate pandas code using Google's Gemini API based on user question and available columns."""
     
     viz_hint = """
     For visualization requests:
     - Always include 'from utils.visualization import create_plot' when using create_plot
     - Available plot types: line, scatter, bar, histogram, boxplot, heatmap, pie
-    - Example: result = create_plot('line', data=df, x='column1', y='column2', title='Trend')
+    - For pie charts: result = create_plot('pie', data=df, x='column_name', title='Title')
+    - For other plots: result = create_plot('plot_type', data=df, x='column1', y='column2', title='Title')
     - The DataFrame 'df' is already loaded and available
+    - Always use data=df parameter, not just df
     """
     
+    context_info = f"\n{context}" if context else ""
+    
     prompt = f"""Generate ONLY Python code (no explanations) to analyze this dataset with columns: {', '.join(columns)}
-    Question: "{question}"
+    Question: "{question}"{context_info}
+    
+    Example responses for visualization:
+    1. For pie chart of categories:
+    ```python
+    from utils.visualization import create_plot
+    result = create_plot('pie', data=df, x='column_name', title='Distribution of Categories')
+    ```
+    
+    2. For comparing two columns:
+    ```python
+    from utils.visualization import create_plot
+    result = create_plot('bar', data=df, x='column1', y='column2', title='Comparison')
+    ```
+
+    3. for data preprocessing (that is the result is to me a dataframe type), result = df.(any operation) , result variable must have the dataframe type.
     
     CRITICAL RULES:
     1. ALWAYS include required imports at the top (pandas, numpy, create_plot)
     2. The DataFrame 'df' is already loaded - DO NOT use read_csv
-    3. Store final result in 'result' variable
-    4. Format numbers with f-strings and commas
-    5. NO comments or markdown
-    6. Keep code concise
-    7. The code should be directly executable - No samples or examples
-    8. If user asks general questions , reply with correct general output as a python string. (for example - user:"hi how are you", python_code(ouput): result = "am fine how are you ")
-    9. Also make sure there are interactive text along with the answers and tables.
+    3. Consider the conversation context when generating code
+    4. If referring to previous operations, make it clear in variable names
+    5. Format numbers with f-strings and commas
+    6. NO comments or markdown
+    7. Keep code concise
+    8. The code should be directly executable - No samples or examples
+    9. If user asks general questions , reply with correct general output. (for example - user:"hi how are you", python_code(ouput): result = "am fine how are you ")
+    10. THE END RESULTS IF IS A STRING MUST BE FORMATED NICELY .IF RESULT IS A DATAFRAME MUST BE FORMATED AS result = df.(any operation)
     {viz_hint if include_viz else ''}
     """
     
     # Configure generation parameters
     generation_config = GenerationConfig(
-        temperature=0.5,  # Lower temperature for more consistent outputs
-        top_p=0.8,       # Nucleus sampling parameter
+        temperature=0.2,  # Lower temperature for more consistent outputs
+        top_p=0.7,       # Nucleus sampling parameter
         max_output_tokens=500,  # Maximum length of response
         candidate_count=1  # Number of completion choices to generate
     )
@@ -76,6 +110,8 @@ def generate_pandas_code(question, columns, include_viz=True):
         prompt,
         generation_config=generation_config
     )
+
+    print(response.text)
     
     # Clean up the generated code
     return clean_code(response.text.strip())

@@ -5,6 +5,14 @@ import numpy as np
 from styles.main import get_css
 from utils.code_generator import generate_pandas_code
 from utils.preprocessing import fill_null_values, remove_null_rows, normalize_columns, detect_patterns
+from utils.visualization import create_plot
+from utils.chat_handler import (
+    init_chat_history, 
+    add_message, 
+    update_context, 
+    get_chat_context,
+    render_chat_interface
+)
 from src.components import (
     render_column_list,
     render_dataset_info,
@@ -87,7 +95,7 @@ def main():
             df = pd.read_csv(uploaded_file)
             
             # Create main layout with columns
-            col1, col2 = st.columns([1, 4])
+            col1, col2 = st.columns([2, 5])
             
             with col1:
                 # Render column list and dataset info
@@ -216,50 +224,85 @@ def main():
                 # Render plot suggestions
                 render_plot_suggestions(df)
                 
-                # Question input section
-                st.markdown("### Ask Questions About Your Data")
-                question = st.text_input(
-                    "What would you like to know about your data?",
-                    placeholder="e.g., 'Show me a scatter plot of column1 vs column2' or 'Calculate the average of column1'"
-                )
-            
-                if question:
-                    with st.spinner("Analyzing..."):
-                        generated_code = generate_pandas_code(question, list(df.columns))
+                # Initialize chat
+                init_chat_history()
+                
+                # Chat interface section
+                chat_section = st.container()
+                
+                with chat_section:
+                    st.markdown("### 💬 Chat with Your Data")
+                    st.markdown("Ask questions about your data in natural language!")
+                    
+                    # Display chat history
+                    render_chat_interface()
+                    
+                    # Chat input
+                    if question := st.chat_input("What would you like to know about your data?", key="chat_input"):
+                        # Add user message to chat and show immediately
+                        add_message("user", question)
+                        # st.rerun()  # Force refresh to show user message
                         
-                        if generated_code:
-                            try:
-                                # Create namespace with imports
-                                namespace = {
-                                    'df': df,
-                                    'pd': pd,
-                                    'np': np,
-                                    'result': None
-                                }
+                        # Process the query in the next run
+                        if st.session_state.messages[-1]["role"] == "user":
+                            # Get context and generate code
+                            context = get_chat_context()
+                            with st.spinner("Thinking..."):
+                                generated_code = generate_pandas_code(question, list(df.columns), context=context)
                                 
-                                try:
-                                    # Clean and execute code
-                                    clean_code = '\n'.join(
-                                        line for line in generated_code.split('\n')
-                                        if line.strip() and not line.strip().startswith('#')
-                                    )
-                                    exec(clean_code, namespace)
-                                    
-                                    # Display results
-                                    display_result(namespace.get('result'))
-                                    
-                                except Exception as e:
-                                    st.error(f"Error executing code: {str(e)}")
-                                    st.error("Please try rephrasing your question.")
-                            
-                            except Exception as e:
-                                st.error(f"Error analyzing data: {str(e)}")
-                                st.error("Please try rephrasing your question.")
-                            
-                            # Show generated code in expander
-                            with st.expander("Show Generated Code"):
-                                st.code(generated_code, language="python")
-                                
+                                if generated_code:
+                                    try:
+                                        # Create namespace with imports
+                                        namespace = {
+                                            'df': df,
+                                            'pd': pd,
+                                            'np': np,
+                                            'create_plot': create_plot,
+                                            'result': None
+                                        }
+                                        
+                                        try:
+                                            # Clean and execute code
+                                            clean_code = '\n'.join(
+                                                line for line in generated_code.split('\n')
+                                                if line.strip() and not line.strip().startswith('#')
+                                            )
+                                            exec(clean_code, namespace)
+                                            
+                                            # Get the result
+                                            result = namespace.get('result')
+                                            
+                                            # Add assistant message with code and result
+                                            if isinstance(result, str):
+                                                message = result
+                                            else:
+                                                message = "Here's what I found based on your question."
+                                            
+                                            add_message(
+                                                "assistant",
+                                                message,
+                                                code=generated_code,
+                                                result=result
+                                            )
+                                            
+                                            # Update context
+                                            update_context(
+                                                operation="data_query",
+                                                columns=[col for col in df.columns if col in generated_code]
+                                            )
+                                            
+                                            # Force a rerun to show the new message immediately
+                                            st.rerun()
+                                            
+                                        except Exception as e:
+                                            error_msg = f"❌ Error executing code: {str(e)}\nPlease try rephrasing your question."
+                                            add_message("assistant", error_msg)
+                                            st.rerun()
+                                            
+                                    except Exception as e:
+                                        error_msg = f"❌ Error analyzing data: {str(e)}\nPlease try rephrasing your question."
+                                        add_message("assistant", error_msg)
+                                        st.rerun()
         except Exception as e:
             st.error(f"Error reading CSV file: {str(e)}")
     else:
